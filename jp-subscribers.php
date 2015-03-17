@@ -20,7 +20,7 @@ if (is_admin()) {
 		// We're going to parse the GitHub markdown release notes, include the parser
 		require_once __DIR__ . '/updater/Parsedown.php';
 	}
-	// new BFIGitHubPluginUpdater(__FILE__, 'jprieton', 'jp-subscribe');
+	new BFIGitHubPluginUpdater(__FILE__, 'jprieton', 'jp-subscribe');
 }
 
 define('JPSDB_PLUGIN_PATH', plugin_dir_path(__FILE__));
