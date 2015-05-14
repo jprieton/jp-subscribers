@@ -3,7 +3,7 @@
  * Plugin Name: JP Subscribe DB
  * Plugin URI:https://github.com/jprieton/jp-subscribe/
  * Description: Ajax suscribe form to DB.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Author: Javier Prieto
  * Author URI: https://github.com/jprieton/
  * License: GPL2
@@ -20,7 +20,7 @@ if (is_admin()) {
 		// We're going to parse the GitHub markdown release notes, include the parser
 		require_once __DIR__ . '/updater/Parsedown.php';
 	}
-	new BFIGitHubPluginUpdater(__FILE__, 'jprieton', 'jp-subscribe');
+	new BFIGitHubPluginUpdater(__FILE__, 'jprieton', 'jp-subscribers');
 }
 
 define('JPSDB_PLUGIN_PATH', plugin_dir_path(__FILE__));
@@ -162,6 +162,51 @@ if (is_admin()) {
 	});
 }
 
+add_action('wp_ajax_jp_subscribers_csv_export', function () {
+
+	global $wpdb;
+	$wpdb instanceof wpdb;
+
+	$subscribers = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}subscribers");
+
+	$fields = array(
+			'subscriber_id',
+			'subscriber_name',
+			'subscriber_email',
+			'suscriber_date',
+	);
+
+	function clean_string_csv($str) {
+		return '"' . str_replace(',', '\,', $str) . '"';
+	}
+
+	header('Content-Description: File Transfer');
+	header('Content-Type: application/octet-stream');
+	header('Content-Disposition: attachment; filename=export.csv');
+	header('Content-Transfer-Encoding: binary');
+	header('Connection: Keep-Alive');
+	header('Expires: 0');
+	header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+	header('Pragma: public');
+
+	$_subscriber = array_map('clean_string_csv', (array) $fields);
+	echo implode(';', $_subscriber);
+	echo "\n";
+
+	foreach ($subscribers as $item) {
+		$subscriber = array();
+		foreach ($fields as $field) {
+			$_item = (array) $item;
+			$subscriber[] = $_item[$field];
+		}
+		$_subscriber = array_map('clean_string_csv', (array) $subscriber);
+		echo implode(';', $_subscriber);
+		echo "\n";
+	}
+	die;
+}
+);
+
 function my_plugin_options() {
 	if (!current_user_can('manage_options')) {
 		wp_die(__('You do not have sufficient permissions to access this page.'));
@@ -169,6 +214,7 @@ function my_plugin_options() {
 	?>
 	<div class="wrap">
 		<h2>Suscriptores</h2>
+		<p><a href="<?php echo admin_url('admin-ajax.php?action=jp_subscribers_csv_export') ?>">Descargar csv</a></p>
 		<?php
 		//Prepare Table of elements
 		$wp_list_table = new Suscriber_List_Table();
